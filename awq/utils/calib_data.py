@@ -16,7 +16,7 @@ def get_calib_dataset(
         if data == "pileval":
             dataset = load_dataset("mit-han-lab/pile-val-backup", split="validation")
         else:
-            dataset = load_dataset(data, split=split)
+            dataset = load_dataset(data, 'main', split=split)
 
         dataset = dataset.shuffle(seed=42)
 
@@ -57,8 +57,11 @@ def get_calib_dataset(
         if n_run == n_samples:
             break
     # now concatenate all samples and split according to max sequence length
+    print(samples)
     cat_samples = torch.cat(samples, dim=1)
+    print(cat_samples.shape)
     n_split = cat_samples.shape[1] // max_seq_len
+    print(n_split)
     logging.debug(f" * Split into {n_split} blocks")
     return [
         cat_samples[:, i * max_seq_len : (i + 1) * max_seq_len] for i in range(n_split)

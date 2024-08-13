@@ -1,21 +1,18 @@
 import os
-import torch
 import platform
-import requests
 from pathlib import Path
 from setuptools import setup, find_packages
-from torch.utils.cpp_extension import CUDAExtension
 
 
 def get_latest_kernels_version(repo):
     """
     Get the latest version of the kernels from the github repo.
     """
-    response = requests.get(f"https://api.github.com/repos/{repo}/releases/latest")
-    data = response.json()
-    tag_name = data["tag_name"]
-    version = tag_name.replace("v", "")
-    return version
+    response = "0.0.7"
+    # data = response.json()
+    # tag_name = data["tag_name"]
+    # version = tag_name.replace("v", "")
+    return "0.0.7"
 
 
 def get_kernels_whl_url(
@@ -33,13 +30,13 @@ def get_kernels_whl_url(
 
 AUTOAWQ_VERSION = "0.2.6"
 PYPI_BUILD = os.getenv("PYPI_BUILD", "0") == "1"
-IS_CPU_ONLY = not torch.backends.mps.is_available() and not torch.cuda.is_available()
+IS_CPU_ONLY = False
 
-CUDA_VERSION = os.getenv("CUDA_VERSION", None) or torch.version.cuda
+CUDA_VERSION = os.getenv("CUDA_VERSION", None) or 12.1
 if CUDA_VERSION:
     CUDA_VERSION = "".join(CUDA_VERSION.split("."))[:3]
 
-ROCM_VERSION = os.getenv("ROCM_VERSION", None) or torch.version.hip
+ROCM_VERSION = os.getenv("ROCM_VERSION", None) or None
 if ROCM_VERSION:
     if ROCM_VERSION.startswith("5.7"):
         ROCM_VERSION = "5.7.1"

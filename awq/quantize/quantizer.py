@@ -150,14 +150,18 @@ class AwqQuantizer:
 
             # [STEP 1]: Get layer, extract linear modules, extract input features
             named_linears = get_named_linears(self.modules[i])
+            # print(named_linears)
 
             # Filter out the linear layers we don't want to exclude
             named_linears = exclude_layers_to_not_quantize(
                 named_linears, self.modules_to_not_convert
             )
+            # print(named_linears)
 
             input_feat = self._get_input_feat(self.modules[i], named_linears)
             clear_memory()
+            
+            # print(self.modules[i])
 
             # [STEP 2]: Compute and apply scale list
             module_config: List[Dict] = self.awq_model.get_layers_for_scaling(
@@ -167,6 +171,7 @@ class AwqQuantizer:
                 self._search_best_scale(self.modules[i], **layer)
                 for layer in module_config
             ]
+            # print(scales_list)
             apply_scale(self.modules[i], scales_list, input_feat_dict=input_feat)
             scales_list = append_str_prefix(
                 scales_list, get_op_name(self.model, self.modules[i]) + "."
@@ -177,6 +182,7 @@ class AwqQuantizer:
                 clip_list = self._search_best_clip(
                     self.modules[i], named_linears, input_feat
                 )
+                # print(clip_list)
                 apply_clip(self.modules[i], clip_list)
                 clip_list = append_str_prefix(
                     clip_list, get_op_name(self.model, self.modules[i]) + "."
@@ -184,7 +190,9 @@ class AwqQuantizer:
 
             # [STEP 4]: Quantize weights
             if not self.export_compatible:
+                # print("applying quant")
                 self._apply_quant(self.modules[i], named_linears)
+                # print(self.modules[i])
 
             clear_memory()
 
@@ -298,12 +306,17 @@ class AwqQuantizer:
         # Gets the average rescaled magnitude for each output channel
         w_mean = w_scale.mean(0)
         clear_memory(weight)
+        
+        # print(inp.shape)
 
         # [STEP 2]: Compute per-channel mean of the input activation with chunking
         # move inp to cpu to avoid memory leak
         inp_flat = inp.cpu().abs().view(-1, inp.shape[-1])
+        # print(inp_flat.shape)
         num_elements = inp_flat.size(0)
+        # print(num_elements)
         num_channels = inp_flat.size(1)
+        # print(num_channels)
         element_size_bytes = inp_flat.element_size() * 2 # multiplied by 2 for FP32
 
         # Calculate chunk size dynamically based on max_chunk_memory
@@ -319,6 +332,7 @@ class AwqQuantizer:
             x_sum += chunk_sum.to(inp.device)
 
         x_mean = (x_sum / num_elements).to(inp.dtype)
+        # print(x_mean.shape)
         clear_memory(x_sum)
 
         # [STEP 3]: Compute output of module
@@ -534,6 +548,7 @@ class AwqQuantizer:
             split=self.split,
             text_column=self.text_column,
         )
+        print(samples)
         samples = torch.cat(samples, dim=0)
 
         inps = []

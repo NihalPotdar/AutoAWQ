@@ -105,9 +105,9 @@ class WQLinear_GEMM(nn.Module):
         self.register_buffer(
             "qweight",
             torch.zeros(
-                (in_features, out_features // (32 // self.w_bit)),
+                (in_features, out_features // (32 // 4)),
                 dtype=torch.int32,
-                device=dev,
+                device="cuda",
             ),
         )
         self.register_buffer(
